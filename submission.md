@@ -35,6 +35,13 @@
 - **The root cause**: The function fetched the correct array of database records but returned them using the Python slice syntax `songs[:-1]`. In Python, negative indexing on a slice operates up to, but explicitly excludes, the element at the specified end index. This forced the application to drop the last sequence track from the dataset immediately before formatting the HTTP response.
 - **Your fix and side-effect check**: I modified the return statement to evaluate as `return [song.to_dict() for song in songs]`, entirely stripping away the truncating slice so that the complete collection is mapped to dictionary representations. I then verified the change by executing `pytest tests/test_playlists.py` to ensure all tests passed successfully without causing regressions in ordering or response structures.
 
+### Issue 2: Friends Listening Now shows people from yesterday
+
+- **How you reproduced it**: By running the `flask shell` and inspecting the service layer constants, I printed out the value of `RECENT_THRESHOLD`. It was configured as `1 day, 0:00:00`, confirming that any song listening events that occurred up to 24 hours ago were actively being flagged by the query window and pushed into the user's active "Listening Now" feed.
+- **How you found the root cause**: Guided by the bug tracker map, I opened `services/feed_service.py` to inspect how the dynamic datetime window boundary was calculated. I immediately isolated the declaration `cutoff = datetime.now(timezone.utc) - RECENT_THRESHOLD` and traced `RECENT_THRESHOLD` back to its global declaration at the top of the file.
+- **The root cause**: The variable `RECENT_THRESHOLD` was statically defined as `timedelta(hours=24)`. While syntactically valid, a 24-hour delta causes the active query filter to include listening historical events from the previous calendar day. For an instantaneous feed feature designed to show friends listening "now," this time threshold was far too wide.
+- **Your fix and side-effect check**: I modified the declaration at the top of `services/feed_service.py` to read `RECENT_THRESHOLD = timedelta(minutes=5)`. This restricts the listening event lookup query to a tight five-minute buffer, ensuring the feed exclusively returns contemporary activity. After saving, I executed the full `pytest` suite to verify that no secondary service features or shared logic dependencies were broken by narrowing the threshold delta.
+
 ## AI Usage
 
 _(We will fill this section out at the very end of the project!)_
