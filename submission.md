@@ -44,4 +44,4 @@
 
 ## AI Usage
 
-_(We will fill this section out at the very end of the project!)_
+I utilized an AI assistant as an interactive engineering co-pilot throughout this debugging sprint. Rather than relying on automated code-generation or guessing solutions blindly, the AI assisted with high-level codebase navigation, tracing data flow architectures (Route-to-Service delegation chains), and breaking down Python standard library structures (such as evaluating `datetime.weekday()`'s `0-6` indexing limits and assessing `timedelta` durations). Every single bug was isolated, structurally evaluated, and verified by me using manual environment tests (`flask shell`) and unit testing tools (`pytest`) prior to finalizing commits.
